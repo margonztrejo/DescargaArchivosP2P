@@ -5,6 +5,8 @@
  */
 package etsaplicaciones;
 
+import etsaplicaciones.searchserver.ServerAvailable;
+
 /**
  *
  * @author Marco
