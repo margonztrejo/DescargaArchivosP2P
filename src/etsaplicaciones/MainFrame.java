@@ -36,6 +36,14 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
         
         serverHandler = new ServerHandler(portGroup, port, ipGroup, this);
     }
+    
+    private String getServersString(ArrayList<ServerAvailable> servers){
+        String value = "";
+        for(int i = 0; i < servers.size(); i++){
+            value += servers.get(i).ID + "\n";
+        }
+        return value;
+    }
    
     private int port = -1;
     private String ipGroup = "228.1.1.1";
@@ -45,8 +53,9 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
     
     @Override
     public void ListHasBeenUpdated(ArrayList<ServerAvailable> servers, ServerAvailable previous, ServerAvailable next) {
-        System.out.println("Anterior: " + previous.ID);
-        System.out.println("Siguiente: " + next.ID);
+        jTextPane2.setText(getServersString(servers));
+        jLabel7.setText(previous.ID);
+        jLabel9.setText(next.ID);
     }
     
     /**
@@ -71,6 +80,10 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
         jButton1 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTextPane3 = new javax.swing.JTextPane();
+        jLabel6 = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Título");
@@ -97,6 +110,14 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
 
         jScrollPane3.setViewportView(jTextPane3);
 
+        jLabel6.setText("Nodo Anterior:");
+
+        jLabel7.setText("????");
+
+        jLabel8.setText("Nodo Siguiente:");
+
+        jLabel9.setText("????");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -119,10 +140,19 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel5)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
+                                .addComponent(jTextField1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jButton1))
-                            .addComponent(jScrollPane3))))
+                            .addComponent(jScrollPane3)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel7)
+                                .addGap(69, 69, 69)
+                                .addComponent(jLabel8)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel9)
+                                .addGap(0, 230, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -131,7 +161,11 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel9))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -161,6 +195,10 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
