@@ -82,17 +82,22 @@ public class FileFinderServer implements Runnable {
             // Se obtiene el flujo de salida del cliente para enviarle mensajes
             this.outCli = new PrintWriter(cliSock.getOutputStream(), true);
 
-            //Se le envía un mensaje al cliente usando su flujo de salida
+            // Se le envía un mensaje al cliente usando su flujo de salida
             this.outCli.println("Petición recibida y aceptada");
 
-            //Se obtiene el flujo entrante desde el cliente
+            // Se obtiene el flujo entrante desde el cliente
             BufferedReader br = new BufferedReader(new InputStreamReader(cliSock.getInputStream()));
 
-            //Mientras haya mensajes desde el cliente
-            String msgServ = br.readLine();
-            System.out.println(msgServ);
+            // Se lee mensaje desde el cliente
+            String [] params = br.readLine().split(",");
+            String fileName = params[0];
+            int portCli = Integer.valueOf(params[1]);
             
-            this.askForFileToNextNode(msgServ);
+            if (portCli == this.port) {
+                this.askForFileToNextNode(fileName);
+            } else {
+                this.stop();
+            }
 
             System.out.println("Fin de la conexión");
         }

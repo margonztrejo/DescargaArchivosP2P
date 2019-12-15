@@ -49,7 +49,7 @@ public class FileFinderClient implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(cliSock.getInputStream()));
             System.out.println(br.readLine());
 
-            outServ.println(this.fileName);
+            outServ.println(this.fileName + "," + this.node.port);
             String msgServ = br.readLine();
             System.out.println(msgServ);
             
