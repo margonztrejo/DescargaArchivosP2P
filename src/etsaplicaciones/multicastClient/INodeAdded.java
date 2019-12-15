@@ -5,10 +5,12 @@
  */
 package etsaplicaciones.multicastClient;
 
+import etsaplicaciones.searchserver.ServerAvailable;
+
 /**
  *
  * @author Marco
  */
-public interface IMulticastMessageReceived {
-    public void messageRecived(String ip, int port);
+public interface INodeAdded {
+    public void nodeAdded(ServerAvailable serverAvailable);
 }

@@ -25,7 +25,7 @@ public class MulticastServer implements Runnable {
     private Thread t;
     
     public MulticastServer(String ip, int port) {
-        this.message = "IP: 228.1.1.1, Port: 9000";
+        this.message = ip + "," + port;
         this.sendSecondsInterval = 5;
         this.ip = ip;
         this.port = port;

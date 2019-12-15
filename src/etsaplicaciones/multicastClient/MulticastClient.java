@@ -5,6 +5,7 @@
  */
 package etsaplicaciones.multicastClient;
 
+import etsaplicaciones.searchserver.ServerAvailable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -20,16 +21,28 @@ public class MulticastClient implements Runnable {
     private final String ip;
     private final int port;
     private Thread t;
+    private final INodeAdded listener;
     
-    public MulticastClient(String ip, int port) {
+    public MulticastClient(String ip, int port, INodeAdded listener) {
         this.ip = ip;
         this.port = port;
+        this.listener = listener;
     }
     
     public void startListening() {
         this.t = new Thread(this);
         this.t.start();
-    }  
+    }
+    
+    private ServerAvailable getServerAvailable(String message) {
+        String [] params = message.split(",");
+        
+        String ipNode = params[0];
+        int portNode = Integer.valueOf(params[1]);
+        String id = ipNode.replace(".", "") + portNode;
+        
+        return new ServerAvailable(id, portNode, ipNode);
+    }
 
     @Override
     public void run() {
@@ -46,6 +59,8 @@ public class MulticastClient implements Runnable {
                 String msg = new String(packet.getData(), packet.getOffset(), packet.getLength());
                 
                 System.out.println("[Multicast UDP message received]" + msg);
+                
+                this.listener.nodeAdded(this.getServerAvailable(msg));
             }
         } catch (IOException ex) {
             Logger.getLogger(MulticastClient.class.getName()).log(Level.SEVERE, null, ex);
