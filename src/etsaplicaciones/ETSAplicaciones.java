@@ -9,13 +9,32 @@ package etsaplicaciones;
  *
  * @author Marco
  */
-public class ETSAplicaciones {
+public class ETSAplicaciones{
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        System.out.println("Adios Mundo");
+        initFrames();
     }
     
+    private static void initFrames(){
+        mainFrame = new MainFrame();
+        initNodeFrame = new InitNodeFrame(new IAskForPort(){
+            @Override
+            public void PortHasBeenInitialized(String port) {
+                mainFrame.setPort(port);
+                initNodeFrame.setVisible(false);
+                mainFrame.setVisible(true);
+            }
+            
+        });
+        
+        mainFrame.setVisible(false);
+        initNodeFrame.setVisible(true);
+    }
+   
+    
+    private static MainFrame mainFrame;
+    private static InitNodeFrame initNodeFrame;
 }
