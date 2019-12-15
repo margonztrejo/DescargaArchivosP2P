@@ -41,7 +41,7 @@ public class ServerFinderClient extends Thread{
                     if(doneStatus)
                         break;
                 }
-            }   
+            }
         }catch(Exception e){
         }
     }

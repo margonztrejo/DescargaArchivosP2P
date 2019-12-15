@@ -10,5 +10,5 @@ package etsaplicaciones;
  * @author Marco
  */
 public interface IAskForPort {
-    public void PortHasBeenInitialized(String port);
+    public void PortHasBeenInitialized(int port);
 }

@@ -24,7 +24,7 @@ public class ETSAplicaciones{
         mainFrame = new MainFrame();
         initNodeFrame = new InitNodeFrame(new IAskForPort(){
             @Override
-            public void PortHasBeenInitialized(String port) {
+            public void PortHasBeenInitialized(int port) {
                 mainFrame.setPort(port);
                 initNodeFrame.setVisible(false);
                 mainFrame.setVisible(true);

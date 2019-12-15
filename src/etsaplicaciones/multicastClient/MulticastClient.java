@@ -41,7 +41,7 @@ public class MulticastClient implements Runnable {
         int portNode = Integer.valueOf(params[1]);
         String id = ipNode.replace(".", "") + portNode;
         
-        return new ServerAvailable(id, portNode, ipNode);
+        return new ServerAvailable(portNode, ipNode);
     }
 
     @Override

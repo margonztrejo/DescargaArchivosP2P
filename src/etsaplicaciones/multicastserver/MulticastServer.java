@@ -21,14 +21,16 @@ public class MulticastServer implements Runnable {
     private final String message;
     private final String ip;
     private final int port;
+    private final int portGroup;
     private final int sendSecondsInterval;
     private Thread t;
     
-    public MulticastServer(String ip, int port) {
+    public MulticastServer(String ip, int port, int portGroup) {
         this.message = ip + "," + port;
         this.sendSecondsInterval = 5;
         this.ip = ip;
         this.port = port;
+        this.portGroup = portGroup;
     }
     
     public void startSending() {
@@ -50,7 +52,7 @@ public class MulticastServer implements Runnable {
     public void run() {
         while(true) {
             try {
-                sendUDPMessage(this.message, this.ip, this.port);
+                sendUDPMessage(this.message, this.ip, this.portGroup);
                 TimeUnit.SECONDS.sleep(this.sendSecondsInterval);
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(MulticastServer.class.getName()).log(Level.SEVERE, null, ex);

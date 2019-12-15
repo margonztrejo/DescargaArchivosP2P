@@ -5,6 +5,8 @@
  */
 package etsaplicaciones.searchserver;
 
+import etsaplicaciones.multicastClient.INodeAdded;
+import etsaplicaciones.multicastClient.MulticastClient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,18 +15,24 @@ import java.util.Comparator;
  *
  * @author Marco
  */
-public class ServerHandler {
+public class ServerHandler implements INodeAdded{
     
-    public ServerHandler(int myPort, String myIP){
-        setNewServerAvailable(myPort, myIP);
-        //Aquí se van a lanzar los dos hilos
+    public ServerHandler(int portGroup, int myPort, String myIP, IServerAvailable listener){
+        this.listener = listener;
+        setNewServerAvailable(myPort, myIP, true);
+        
+        MulticastClient multicastClient = new MulticastClient(myIP, portGroup, this);
+        multicastClient.startListening();
     }
     
-    public void setNewServerAvailable(int port, String ip){
-        String ID = generateID(port, ip);
-        ServerAvailable server = new ServerAvailable(ID, port, ip);
+    public void setNewServerAvailable(int port, String ip, Boolean isLocal){
+        ServerAvailable server = new ServerAvailable(port, ip);
+        if(isLocal){
+            myID = server.ID;
+        }
         putNewServer(server);
-        listener.ListHasBeenUpdated();
+        obtainPreviousAndNext();
+        listener.ListHasBeenUpdated(servers, previous, next);
     }
     
     private void putNewServer(ServerAvailable server){
@@ -37,11 +45,59 @@ public class ServerHandler {
         });
     }
     
-    private String generateID(int port, String ip){
-        return ip + port;
+    private void obtainPreviousAndNext(){
+        int maxIndex = servers.size() - 1;
+        if(servers.isEmpty())
+            return;
+        
+        if(servers.size() == 1){
+            previous = servers.get(0);
+            next = servers.get(0);
+        }else{
+            for(int i = 0; i < servers.size(); i++){
+                if(servers.get(i).ID == null ? myID == null : servers.get(i).ID.equals(myID)){
+                    if(i == 0){
+                        previous = servers.get(maxIndex);
+                        next = servers.get(i + 1);
+                    }else if(i == maxIndex){
+                        previous = servers.get(i - 1);
+                        next = servers.get(0);
+                    }else{
+                        previous = servers.get(i - 1);
+                        next = servers.get(i + 1);
+                    }
+                }
+            }
+        }
     }
     
-    private ArrayList<ServerAvailable> servers;
+    public ServerAvailable getPrevious(){
+        return previous;
+    }
+    
+    public ServerAvailable getNext(){
+        return next;
+    }
+    
+    public ArrayList<ServerAvailable> getServers(){
+        return servers;
+    }
+    
+    @Override
+    public void nodeAdded(ServerAvailable serverAvailable) {
+        for(int i = 0; i < servers.size(); i++){
+            if(servers.get(i).ID == null ? serverAvailable.ID == null : servers.get(i).ID.equals(serverAvailable.ID)){
+                servers.get(i).resetTimer();
+                return;
+            }
+        }
+        setNewServerAvailable(serverAvailable.port, serverAvailable.ip, false);
+    }
+    
+    private ArrayList<ServerAvailable> servers = new ArrayList<ServerAvailable>();
     private IServerAvailable listener;
+    private String myID;
+    private ServerAvailable previous = null;
+    private ServerAvailable next = null;
     
 }
