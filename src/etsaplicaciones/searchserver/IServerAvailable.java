@@ -5,10 +5,12 @@
  */
 package etsaplicaciones.searchserver;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Marco
  */
 public interface IServerAvailable {
-    public void ListHasBeenUpdated();
+    public void ListHasBeenUpdated(ArrayList<ServerAvailable> servers, ServerAvailable previous, ServerAvailable next);
 }

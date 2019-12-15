@@ -14,8 +14,8 @@ import java.util.Timer;
  */
 public class ServerAvailable {
     
-    public ServerAvailable(String ID, int port, String ip){
-        this.ID = ID;
+    public ServerAvailable(int port, String ip){
+        this.ID = ip.replace(".", "") + port;
         this.port = port;
         this.ip = ip;
         this.timer = 11;
@@ -28,10 +28,6 @@ public class ServerAvailable {
         };
         Timer t = new Timer();
         t.schedule(timerTask, 15,1000);
-    }
-    
-    public void setID(String ID){
-        this.ID = ID;
     }
     
     public String getID(){
@@ -52,6 +48,14 @@ public class ServerAvailable {
     
     public String getIP(){
         return ip;
+    }
+    
+    public void resetTimer(){
+        this.timer = 11;
+    }
+    
+    public int getTimer(){
+        return timer;
     }
     
     public String ID;

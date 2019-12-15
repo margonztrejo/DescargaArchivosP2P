@@ -5,11 +5,17 @@
  */
 package etsaplicaciones;
 
+import etsaplicaciones.multicastserver.MulticastServer;
+import etsaplicaciones.searchserver.IServerAvailable;
+import etsaplicaciones.searchserver.ServerAvailable;
+import etsaplicaciones.searchserver.ServerHandler;
+import java.util.ArrayList;
+
 /**
  *
  * @author Marco
  */
-public class MainFrame extends javax.swing.JFrame {
+public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
 
     /**
      * Creates new form Main
@@ -18,12 +24,30 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
     }
     
-    public void setPort(String port){
+    public void setPort(int port){
         this.port = port;
-        jLabel2.setText(port);
+        jLabel2.setText("" + port);
+        initMulticast();
+    }
+    
+    private void initMulticast(){
+        MulticastServer multicastServer = new MulticastServer(ipGroup, port, portGroup);
+        multicastServer.startSending();
+        
+        serverHandler = new ServerHandler(portGroup, port, ipGroup, this);
     }
    
-    private String port;
+    private int port = -1;
+    private String ipGroup = "228.1.1.1";
+    private int portGroup = 8020;
+    private ServerHandler serverHandler;
+    
+    
+    @Override
+    public void ListHasBeenUpdated(ArrayList<ServerAvailable> servers, ServerAvailable previous, ServerAvailable next) {
+        System.out.println("Anterior: " + previous.ID);
+        System.out.println("Siguiente: " + next.ID);
+    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -145,4 +169,5 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JTextPane jTextPane2;
     private javax.swing.JTextPane jTextPane3;
     // End of variables declaration//GEN-END:variables
+
 }
