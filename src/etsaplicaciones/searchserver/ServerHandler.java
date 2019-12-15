@@ -10,6 +10,8 @@ import etsaplicaciones.multicastClient.MulticastClient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  *
@@ -23,6 +25,18 @@ public class ServerHandler implements INodeAdded{
         
         MulticastClient multicastClient = new MulticastClient(myIP, portGroup, this);
         multicastClient.startListening();
+        
+        TimerTask timerTask = new TimerTask(){
+            @Override
+            public void run() {
+                checkIfServersAreStillAvailable();
+                obtainPreviousAndNext();
+                listener.ListHasBeenUpdated(servers, previous, next);
+            }
+        };
+        
+        Timer t = new Timer();
+        t.schedule(timerTask, 0, 1000);
     }
     
     public void setNewServerAvailable(int port, String ip, Boolean isLocal){
@@ -81,6 +95,18 @@ public class ServerHandler implements INodeAdded{
     
     public ArrayList<ServerAvailable> getServers(){
         return servers;
+    }
+    
+    private void checkIfServersAreStillAvailable(){
+        ArrayList<ServerAvailable> delete = new ArrayList<ServerAvailable>();
+        for(int i = 0; i < servers.size(); i++){
+            if(servers.get(i).getTimer() <= 0){
+                delete.add(servers.get(i));
+            }
+        }
+        for(int i = 0; i < delete.size(); i++){
+            servers.remove(delete.get(i));
+        }
     }
     
     @Override

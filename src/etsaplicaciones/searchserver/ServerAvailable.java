@@ -27,7 +27,7 @@ public class ServerAvailable {
             }
         };
         Timer t = new Timer();
-        t.schedule(timerTask, 15,1000);
+        t.schedule(timerTask, 0, 1000);
     }
     
     public String getID(){
