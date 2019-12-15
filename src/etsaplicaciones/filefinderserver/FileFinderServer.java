@@ -8,7 +8,6 @@ package etsaplicaciones.filefinderserver;
 import etsaplicaciones.ETSAplicaciones;
 import etsaplicaciones.searchserver.ServerAvailable;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,6 +31,12 @@ public class FileFinderServer implements Runnable {
     public FileFinderServer(int port, ServerAvailable nextNode) {
         this.port = port;
         this.nextNode = nextNode;
+        createDirectoryIfNotExist();
+    }
+    
+    private void createDirectoryIfNotExist(){
+        File file = new File("C:\\ets\\" + this.port);
+        file.mkdirs();
     }
     
     public void startListening() throws IOException {

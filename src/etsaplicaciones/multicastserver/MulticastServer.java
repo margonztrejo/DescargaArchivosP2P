@@ -44,7 +44,7 @@ public class MulticastServer implements Runnable {
             byte[] msg = message.getBytes();
             DatagramPacket packet = new DatagramPacket(msg, msg.length, group, port);
             socket.send(packet);
-            System.out.println("Sending: " + message);
+            //System.out.println("Sending: " + message);
         }
     }
 

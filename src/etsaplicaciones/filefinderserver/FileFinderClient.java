@@ -39,7 +39,7 @@ public class FileFinderClient implements Runnable {
     public void run() {
         try
         {
-            Socket cliSock = new Socket(node.ip, node.port); //Socket para el cliente en localhost en puerto 1234
+            Socket cliSock = new Socket("localhost", node.port);
             System.out.println("Conectando...");
             
             //Flujo de datos hacia el servidor

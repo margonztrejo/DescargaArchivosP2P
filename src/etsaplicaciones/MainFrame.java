@@ -5,6 +5,9 @@
  */
 package etsaplicaciones;
 
+import etsaplicaciones.filefinderserver.FileFinderClient;
+import etsaplicaciones.filefinderserver.FileFinderServer;
+import etsaplicaciones.filefinderserver.IFindFileResponse;
 import etsaplicaciones.multicastserver.MulticastServer;
 import etsaplicaciones.searchserver.IServerAvailable;
 import etsaplicaciones.searchserver.ServerAvailable;
@@ -15,7 +18,7 @@ import java.util.ArrayList;
  *
  * @author Marco
  */
-public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
+public class MainFrame extends javax.swing.JFrame implements IServerAvailable, IFindFileResponse {
 
     /**
      * Creates new form Main
@@ -28,6 +31,23 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
         this.port = port;
         jLabel2.setText("" + port);
         initMulticast();
+        initFileFinderServer();
+    }
+    
+    private void initFileFinderServer(){
+        fileFinderServer = new FileFinderServer(port, serverHandler.getNext());
+        try{
+            fileFinderServer.startListening();
+        }catch(Exception e){
+        }
+    }
+    private void askForFile(){
+        String fileName = jTextField1.getText();
+        fileFinderClient = new FileFinderClient(serverHandler.getNext(), this);
+        try{
+            fileFinderClient.askForFile(fileName);
+        }catch(Exception e){
+        }
     }
     
     private void initMulticast(){
@@ -44,19 +64,47 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
         }
         return value;
     }
+    
+    private void notifyMessage(String message){
+        this.message += message;
+        jTextPane1.setText(this.message);
+    }
+    
+    @Override
+    public void ListHasBeenUpdated(ArrayList<ServerAvailable> servers, ServerAvailable previous, ServerAvailable next) {
+        if(this.previous != previous){
+            if(this.previous != null){
+                notifyMessage("El nodo previo ha cambiado de " + this.previous.ID + " a " + previous.ID + "\n");
+            }
+            this.previous = previous;
+        }
+        if(this.next != next){
+            if(this.next != null){
+                notifyMessage("El nodo siguiente ha cambiado de " + this.next.ID + " a " + next.ID + "\n");
+            }
+            this.next = next;
+        }
+        
+        jTextPane2.setText(getServersString(servers));
+        jLabel7.setText(previous.ID);
+        jLabel9.setText(next.ID);
+    }
+    
+    @Override
+    public void findFileResponse(String message) {
+        jTextPane3.setText(message);
+    }
    
     private int port = -1;
     private String ipGroup = "228.1.1.1";
     private int portGroup = 8020;
     private ServerHandler serverHandler;
+    private FileFinderServer fileFinderServer;
+    private FileFinderClient fileFinderClient;
+    private ServerAvailable previous;
+    private ServerAvailable next;
     
-    
-    @Override
-    public void ListHasBeenUpdated(ArrayList<ServerAvailable> servers, ServerAvailable previous, ServerAvailable next) {
-        jTextPane2.setText(getServersString(servers));
-        jLabel7.setText(previous.ID);
-        jLabel9.setText(next.ID);
-    }
+    private String message = "";
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -96,7 +144,6 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
 
         jLabel3.setText("Eventos");
 
-        jTextPane1.setText("Event 1: bla");
         jScrollPane1.setViewportView(jTextPane1);
 
         jLabel4.setText("Servidores");
@@ -107,6 +154,11 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
         jLabel5.setToolTipText("");
 
         jButton1.setText("Buscar");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jScrollPane3.setViewportView(jTextPane3);
 
@@ -185,6 +237,10 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        askForFile();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     
 

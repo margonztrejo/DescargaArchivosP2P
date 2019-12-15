@@ -107,6 +107,14 @@ public class ServerHandler implements INodeAdded{
         for(int i = 0; i < delete.size(); i++){
             servers.remove(delete.get(i));
         }
+        if(delete.size() > 0){
+            servers.sort((ServerAvailable o1, ServerAvailable o2) -> {
+                if(o1.port > o2.port)
+                    return 1;
+                else
+                    return -1;
+            });
+        }
     }
     
     @Override

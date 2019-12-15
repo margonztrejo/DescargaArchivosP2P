@@ -52,13 +52,13 @@ public class MulticastClient implements Runnable {
             socket.joinGroup(group);
             
             while(true) {
-                System.out.println("Waiting for multicast message...");
+                //System.out.println("Waiting for multicast message...");
                 
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 String msg = new String(packet.getData(), packet.getOffset(), packet.getLength());
                 
-                System.out.println("[Multicast UDP message received]" + msg);
+                //System.out.println("[Multicast UDP message received]" + msg);
                 
                 this.listener.nodeAdded(this.getServerAvailable(msg));
             }
