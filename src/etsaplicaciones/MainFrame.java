@@ -12,6 +12,7 @@ import etsaplicaciones.multicastserver.MulticastServer;
 import etsaplicaciones.searchserver.IServerAvailable;
 import etsaplicaciones.searchserver.ServerAvailable;
 import etsaplicaciones.searchserver.ServerHandler;
+import java.net.InetAddress;
 import java.util.ArrayList;
 
 /**
@@ -35,15 +36,16 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void initFileFinderServer(){
-        fileFinderServer = new FileFinderServer(port, serverHandler.getNext());
+        fileFinderServer = new FileFinderServer(port, next);
         try{
             fileFinderServer.startListening();
         }catch(Exception e){
         }
     }
     private void askForFile(){
+        jButton1.setEnabled(false);
         String fileName = jTextField1.getText();
-        fileFinderClient = new FileFinderClient(serverHandler.getNext(), this);
+        fileFinderClient = new FileFinderClient(port, next, this);
         try{
             fileFinderClient.askForFile(fileName);
         }catch(Exception e){
@@ -53,8 +55,12 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private void initMulticast(){
         MulticastServer multicastServer = new MulticastServer(ipGroup, port, portGroup);
         multicastServer.startSending();
-        
-        serverHandler = new ServerHandler(portGroup, port, ipGroup, this);
+        try{
+            serverHandler = new ServerHandler(portGroup, ipGroup, port, InetAddress.getLocalHost().getHostAddress(), this);
+        }
+        catch(Exception e){
+            System.out.println("Get IP: " + e.getMessage());
+        }
     }
     
     private String getServersString(ArrayList<ServerAvailable> servers){
@@ -83,6 +89,8 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                 notifyMessage("El nodo siguiente ha cambiado de " + this.next.ID + " a " + next.ID + "\n");
             }
             this.next = next;
+            if(fileFinderServer != null)
+                fileFinderServer.setNewNextNode(next);
         }
         
         jTextPane2.setText(getServersString(servers));
@@ -92,6 +100,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     
     @Override
     public void findFileResponse(String message) {
+        jButton1.setEnabled(true);
         jTextPane3.setText(message);
     }
    
@@ -144,10 +153,12 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
 
         jLabel3.setText("Eventos");
 
+        jTextPane1.setEditable(false);
         jScrollPane1.setViewportView(jTextPane1);
 
         jLabel4.setText("Servidores");
 
+        jTextPane2.setEditable(false);
         jScrollPane2.setViewportView(jTextPane2);
 
         jLabel5.setText("Buscar Archivos");
