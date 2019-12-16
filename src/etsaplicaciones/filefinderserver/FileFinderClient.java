@@ -53,11 +53,12 @@ public class FileFinderClient implements Runnable {
 
             outServ.println(this.fileName + "," + this.portSource);
             String msgServ = br.readLine();
-            System.out.println(msgServ);
+            System.out.println("Server response: " + msgServ);
             
             this.listener.findFileResponse(msgServ);
             
             cliSock.close();//Fin de la conexión
+            System.out.println("Client: Socket close");
         }
         catch (Exception e)
         {

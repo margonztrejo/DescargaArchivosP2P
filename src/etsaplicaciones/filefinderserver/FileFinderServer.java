@@ -220,11 +220,13 @@ public class FileFinderServer implements Runnable {
                         this.outCli.println("");
                         eventListener.showEvent("El nodo del puerto " +  portCli + " solicitó el archivo " + fileName + ". No se encuentra disponible" + "\n");
                     }
-                    this.stop();
                 } else {
                     eventListener.showEvent("Se le ha preguntado al nodo con puerto " + nextNode.port + " si tiene el archivo" + "\n");
                     this.askForFileToNextNode(fileName, portCli);
                 }
+                
+                System.out.println("Server stop");
+                this.stop();
             }
         }
         catch (Exception e)
