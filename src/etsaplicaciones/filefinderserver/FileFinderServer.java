@@ -10,27 +10,18 @@ import etsaplicaciones.ShowEventListener;
 import etsaplicaciones.searchserver.ServerAvailable;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -105,25 +96,47 @@ public class FileFinderServer implements Runnable {
         return this.port + 100;
     }
     
+    public static byte[] obtenerChecksum(String nombreArchivo) throws Exception {
+        InputStream fis = new FileInputStream(nombreArchivo);
+
+        byte[] buffer = new byte[1024];
+        MessageDigest complete = MessageDigest.getInstance("MD5");
+        int numRead;
+        // Leer el archivo pedazo por pedazo
+        do {
+            // Leer datos y ponerlos dentro del búfer
+            numRead = fis.read(buffer);
+            // Si se leyó algo, se actualiza el MessageDigest
+            if (numRead > 0) {
+                complete.update(buffer, 0, numRead);
+            }
+        } while (numRead != -1);
+
+        fis.close();
+        // Devolver el arreglo de bytes
+        return complete.digest();
+    }
+
+    public static String obtenerMD5ComoString(String nombreArchivo) throws Exception {
+        // Convertir el arreglo de bytes a cadena
+        byte[] b = obtenerChecksum(nombreArchivo);
+        StringBuilder resultado = new StringBuilder();
+
+        for (byte unByte : b) {
+            resultado.append(Integer.toString((unByte & 0xff) + 0x100, 16).substring(1));
+        }
+        return resultado.toString();
+    }
+    
     private String getResponse(String fileName){
         String response = "";
         try{
             response += getPortForDownload();
             response += ":" + myIp;
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            InputStream is = Files.newInputStream(Paths.get("C:\\ets\\" + this.port + "\\" + fileName));
-            DigestInputStream dis = new DigestInputStream(is, md);
-            byte[] messageDigest = dis.getMessageDigest().digest();
             
-            // Convert byte array into signum representation 
-            BigInteger no = new BigInteger(1, messageDigest); 
-  
-            // Convert message digest into hex value 
-            String hashtext = no.toString(16); 
-            while (hashtext.length() < 32) { 
-                hashtext = "0" + hashtext; 
-            }
-            response += ":" + hashtext;
+            String pathFile = "C:\\ets\\" + this.port + "\\" + fileName;
+            String checksum = FileFinderServer.obtenerMD5ComoString(pathFile);
+            response += ":" + checksum;
             
         }catch(Exception e){
         

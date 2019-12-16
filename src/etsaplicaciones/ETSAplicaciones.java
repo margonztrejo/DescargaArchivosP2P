@@ -5,10 +5,6 @@
  */
 package etsaplicaciones;
 
-import etsaplicaciones.filesenderserver.FileSenderClient;
-import etsaplicaciones.filesenderserver.FileSenderServer;
-import etsaplicaciones.searchserver.ServerAvailable;
-
 /**
  *
  * @author Marco
@@ -20,23 +16,14 @@ public class ETSAplicaciones{
      */
     public static void main(String[] args) {
         initFrames();
-        /*FileSenderServer fss = new FileSenderServer(new ServerAvailable(9000, "localhost"));
-        fss.startListening();
-        
-        FileSenderClient fsc = new FileSenderClient(new ServerAvailable(9000, "localhost"), new ServerAvailable(9000, "localhost"));
-        fsc.downloadFile("asdf.txt", new int[]{ 9000 });*/
     }
     
     private static void initFrames(){
         mainFrame = new MainFrame();
-        initNodeFrame = new InitNodeFrame(new IAskForPort(){
-            @Override
-            public void PortHasBeenInitialized(int port) {
-                mainFrame.setPort(port);
-                initNodeFrame.setVisible(false);
-                mainFrame.setVisible(true);
-            }
-            
+        initNodeFrame = new InitNodeFrame((int port) -> {
+            mainFrame.setPort(port);
+            initNodeFrame.setVisible(false);
+            mainFrame.setVisible(true);
         });
         
         mainFrame.setVisible(false);
