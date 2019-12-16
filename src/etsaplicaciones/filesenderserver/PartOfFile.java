@@ -67,10 +67,19 @@ public class PartOfFile {
         return md5;
     }
     
+    public void setOption(int option){
+        this.option = option;
+    }
+    
+    public int getOption(){
+        return this.option;
+    }
+    
     private int port;
     private Boolean downloaded;
     private byte [] partOfFile;
     private int partNumber;
     private String ip;
     private String md5;
+    private int option;
 }

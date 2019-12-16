@@ -113,12 +113,20 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void downloadFile(){
+        totalParts = 0;
+        for(int i = 0; i < partsOfFile.size(); i++){
+            if(partsOfFile.get(i).getOption() == option){
+                totalParts++;
+            }
+        }
         jButton2.setEnabled(false);
         listOfDownloadClient = new ArrayList();
         for(int i = 0; i < partsOfFile.size(); i++){
-            FileSenderClient fsc = new FileSenderClient(new ServerAvailable(port, myIp), this);
-            listOfDownloadClient.add(fsc);
-            fsc.downloadFile(fileName, partsOfFile.get(i).getPort(), partsOfFile.get(i).getPartNumber(), partsOfFile.size());
+            if(partsOfFile.get(i).getOption() == option){
+                FileSenderClient fsc = new FileSenderClient(new ServerAvailable(port, myIp), this);
+                listOfDownloadClient.add(fsc);
+                fsc.downloadFile(fileName, partsOfFile.get(i).getPort(), partsOfFile.get(i).getPartNumber(), totalParts);
+            }
         }
     }
     
@@ -144,7 +152,9 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private void checkIfAllPartsDownloaded(){
         Boolean allDownloads = true;
         for(int i = 0; i < partsOfFile.size(); i++){
-            allDownloads = allDownloads && partsOfFile.get(i).getDownloaded();
+            if(partsOfFile.get(i).getOption() == option){
+                allDownloads = allDownloads && partsOfFile.get(i).getDownloaded();
+            }
         }
         if(allDownloads){
             FileOutputStream fos = null;
@@ -155,15 +165,19 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                 bos = new BufferedOutputStream(fos);
                 int totalLen = 0;
                 for(int i = 0; i < partsOfFile.size(); i++){
-                    totalLen += partsOfFile.get(i).getPart().length;
+                    if(partsOfFile.get(i).getOption() == option){
+                        totalLen += partsOfFile.get(i).getPart().length;
+                    }
                 }
                 byte [] file = new byte [totalLen];
                 int index = 0;
                 for(int i = 0; i < partsOfFile.size(); i++){
-                    byte [] b = partsOfFile.get(i).getPart();
-                    for(int j = 0; j < b.length; j ++){
-                        file[index] = b[j];
-                        index++;
+                    if(partsOfFile.get(i).getOption() == option){
+                        byte [] b = partsOfFile.get(i).getPart();
+                        for(int j = 0; j < b.length; j ++){
+                            file[index] = b[j];
+                            index++;
+                        }
                     }
                 }
                 
@@ -181,6 +195,43 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                 }
             }
             jButton2.setEnabled(true);
+        }
+    }
+    
+    private void orderPartsOfFile(){
+        if(partsOfFile.size() > 0){
+            String portsString = "";
+            partsOfFile.sort((PartOfFile p1, PartOfFile p2) -> {
+                return p1.getMD5().compareTo(p2.getMD5());
+            });
+
+
+            String currentMD5 = partsOfFile.get(0).getMD5();
+            int options = 1;
+            int part = 1;
+            partsOfFile.get(0).setPartNumber(part);
+            partsOfFile.get(0).setOption(options);
+            portsString += "Opción " + options + "\n";
+            portsString += part + ".-" + partsOfFile.get(0).getIp().replace(".", "") + partsOfFile.get(0).getPort() + "\n";
+            part++;
+            for(int i = 1; i < partsOfFile.size(); i++){
+                if(currentMD5 == null ? partsOfFile.get(i).getMD5() == null : currentMD5.equals(partsOfFile.get(i).getMD5())){
+                    portsString += part + ".-" + partsOfFile.get(i).getIp().replace(".", "") + partsOfFile.get(i).getPort() + "\n";
+                    partsOfFile.get(i).setPartNumber(part);
+                    partsOfFile.get(i).setOption(options);
+                    part++;
+                }else{
+                    part = 1;
+                    options ++;
+                    portsString += "Opción " + options + "\n";
+                    portsString += part + ".-" + partsOfFile.get(i).getIp().replace(".", "") + partsOfFile.get(i).getPort() + "\n";
+                    currentMD5 = partsOfFile.get(i).getMD5();
+                    partsOfFile.get(i).setPartNumber(part);
+                    partsOfFile.get(i).setOption(options);
+                    part++;
+                }
+            }
+            jTextPane3.setText(portsString);
         }
     }
     
@@ -230,14 +281,12 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         }else{
             partsOfFile = new ArrayList();
             String [] ports = message.split(",");
-            String portsString = "";
             for(int i = 0; i < ports.length; i++){
                 String [] res = ports[i].split(":");
                 partsOfFile.add(new PartOfFile(Integer.parseInt(res[0]), res[1], res[2], i + 1));
-                portsString += (i + 1) + ".-" + ports[i] + "\n";
             }
+            orderPartsOfFile();
             jButton2.setEnabled(true);
-            jTextPane3.setText(portsString);
         }
         jButton1.setEnabled(true);
     }
@@ -256,6 +305,8 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private ArrayList<PartOfFile> partsOfFile;
     private ArrayList<FileSenderClient> listOfDownloadClient;
     private String message = "";
+    private int totalParts;
+    private int option;
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -440,6 +491,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        option = Integer.parseInt(jTextField2.getText());
         downloadFile();
     }//GEN-LAST:event_jButton2ActionPerformed
 
