@@ -63,10 +63,13 @@ public class FileSenderServer implements Runnable {
                     // Send file
                     File f = new File("C:\\ets\\" + this.node.port + "\\" + fileName);
                     if (f.exists()) {
+                        int numBytes =  (int)f.length() / totalParts;
+                        int initByte = numBytes * numPart;
+                        System.out.println("Num bytes: " + numBytes);
                         byte [] mybytearray  = new byte[(int)f.length()];
                         fis = new FileInputStream(f);
                         bis = new BufferedInputStream(fis);
-                        bis.read(mybytearray, 0, mybytearray.length);
+                        bis.read(mybytearray, initByte, numBytes);
                         os = cliSock.getOutputStream();
                         System.out.println("Sending " + fileName + "(" + mybytearray.length + " bytes)");
                         os.write(mybytearray, 0, mybytearray.length);
