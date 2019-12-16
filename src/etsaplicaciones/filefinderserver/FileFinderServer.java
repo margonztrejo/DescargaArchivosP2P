@@ -186,10 +186,19 @@ public class FileFinderServer implements Runnable {
     
     @Override
     public void run() {
+        try {
+            this.servSock = new ServerSocket(this.port);
+        } catch (IOException ex) {
+            Logger.getLogger(FileFinderServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         while(true){
             try
             {
-                this.servSock = new ServerSocket(this.port);
+                if (this.servSock.isClosed()) {
+                    this.servSock = new ServerSocket(this.port);
+                }
+                
                 System.out.println("Esperando en puerto " + this.port + "...");
                 
                 //Accept comienza el socket y espera una conexión desde un cliente
@@ -220,8 +229,6 @@ public class FileFinderServer implements Runnable {
                         this.outCli.println("");
                         eventListener.showEvent("El nodo del puerto " +  portCli + " solicitó el archivo " + fileName + ". No se encuentra disponible" + "\n");
                     }
-                    System.out.println("Server stop");
-                    this.stop();
                 } else {
                     eventListener.showEvent("Se le ha preguntado al nodo con puerto " + nextNode.port + " si tiene el archivo" + "\n");
                     this.askForFileToNextNode(fileName, portCli);
