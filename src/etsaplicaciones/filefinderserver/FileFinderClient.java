@@ -22,8 +22,10 @@ public class FileFinderClient implements Runnable {
     private String fileName;
     private Thread t;
     private final IFindFileResponse listener;
+    private int portSource;
     
-    public FileFinderClient(ServerAvailable node, IFindFileResponse listener) {
+    public FileFinderClient(int portSource, ServerAvailable node, IFindFileResponse listener) {
+        this.portSource = portSource;
         this.node = node;
         this.listener = listener;
     }
@@ -39,7 +41,7 @@ public class FileFinderClient implements Runnable {
     public void run() {
         try
         {
-            Socket cliSock = new Socket("localhost", this.node.port);
+            Socket cliSock = new Socket(node.ip, node.port); 
             System.out.println("Conectando...");
             
             //Flujo de datos hacia el servidor
@@ -49,7 +51,7 @@ public class FileFinderClient implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(cliSock.getInputStream()));
             System.out.println(br.readLine());
 
-            outServ.println(this.fileName + "," + this.node.port);
+            outServ.println(this.fileName + "," + this.portSource);
             String msgServ = br.readLine();
             System.out.println(msgServ);
             

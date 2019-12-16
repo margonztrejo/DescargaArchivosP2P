@@ -34,14 +34,14 @@ public class MulticastClient implements Runnable {
         this.t.start();
     }
     
-    private ServerAvailable getServerAvailable(String message) {
+    private ServerAvailable getServerAvailable(String message, InetAddress address) {
         String [] params = message.split(",");
         
         String ipNode = params[0];
         int portNode = Integer.valueOf(params[1]);
         String id = ipNode.replace(".", "") + portNode;
         
-        return new ServerAvailable(portNode, ipNode);
+        return new ServerAvailable(portNode, address.getHostAddress());
     }
 
     @Override
@@ -60,7 +60,7 @@ public class MulticastClient implements Runnable {
                 
                 //System.out.println("[Multicast UDP message received]" + msg);
                 
-                this.listener.nodeAdded(this.getServerAvailable(msg));
+                this.listener.nodeAdded(this.getServerAvailable(msg, packet.getAddress()));
             }
         } catch (IOException ex) {
             Logger.getLogger(MulticastClient.class.getName()).log(Level.SEVERE, null, ex);

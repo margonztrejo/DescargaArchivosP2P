@@ -19,11 +19,11 @@ import java.util.TimerTask;
  */
 public class ServerHandler implements INodeAdded{
     
-    public ServerHandler(int portGroup, int myPort, String myIP, IServerAvailable listener){
+    public ServerHandler(int portGroup, String ipGroup, int myPort, String myIP, IServerAvailable listener){
         this.listener = listener;
         setNewServerAvailable(myPort, myIP, true);
         
-        MulticastClient multicastClient = new MulticastClient(myIP, portGroup, this);
+        MulticastClient multicastClient = new MulticastClient(ipGroup, portGroup, this);
         multicastClient.startListening();
         
         TimerTask timerTask = new TimerTask(){
