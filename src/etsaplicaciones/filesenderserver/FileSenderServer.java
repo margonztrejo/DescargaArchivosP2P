@@ -43,8 +43,8 @@ public class FileSenderServer implements Runnable {
         Socket cliSock = null;
         
         try {
-            servsock = new ServerSocket(portDownload);
             while (true) {
+                servsock = new ServerSocket(portDownload);
                 System.out.println("Waiting...");
                 try {
                     cliSock = servsock.accept();
@@ -53,7 +53,7 @@ public class FileSenderServer implements Runnable {
                     // Get Parameters
                     BufferedReader br = new BufferedReader(new InputStreamReader(cliSock.getInputStream()));
                     String [] params = br.readLine().split(",");
-//                    int port = Integer.valueOf(params[0]);
+                    
                     String fileName = params[0];
                     int totalParts = Integer.valueOf(params[1]);
                     int numPart = Integer.valueOf(params[2]);
@@ -64,12 +64,16 @@ public class FileSenderServer implements Runnable {
                     File f = new File("C:\\ets\\" + this.node.port + "\\" + fileName);
                     if (f.exists()) {
                         int numBytes =  (int)f.length() / totalParts;
-                        int initByte = numBytes * numPart;
-                        System.out.println("Num bytes: " + numBytes);
-                        byte [] mybytearray  = new byte[(int)f.length()];
+                        int initByte = numBytes * (numPart - 1);
+                        if(totalParts == numPart){
+                            numBytes = (int)f.length() - initByte;
+                        }
+                        System.out.println("Byte incial: " + initByte + ", numPart:  "+ numPart + ", Num bytes: " + numBytes);
+                        byte [] mybytearray  = new byte[numBytes];
                         fis = new FileInputStream(f);
                         bis = new BufferedInputStream(fis);
-                        bis.read(mybytearray, initByte, numBytes);
+                        bis.skip(initByte);
+                        bis.read(mybytearray, 0, numBytes);
                         os = cliSock.getOutputStream();
                         System.out.println("Sending " + fileName + "(" + mybytearray.length + " bytes)");
                         os.write(mybytearray, 0, mybytearray.length);
@@ -82,16 +86,11 @@ public class FileSenderServer implements Runnable {
                     if (os != null) os.close();
                     if (cliSock != null) cliSock.close();
                 }
+                servsock.close();
             }
         }
         catch (IOException ex) {
             Logger.getLogger(FileSenderServer.class.getName()).log(Level.SEVERE, null, ex);
-        } finally {
-          if (servsock != null) try {
-              servsock.close();
-          } catch (IOException ex) {
-              Logger.getLogger(FileSenderServer.class.getName()).log(Level.SEVERE, null, ex);
-          }
         }
     }
     

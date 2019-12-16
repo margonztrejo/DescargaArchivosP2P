@@ -21,20 +21,23 @@ import java.util.logging.Logger;
  */
 public class FileSenderClient implements Runnable {
     private final ServerAvailable node;
-    private final ServerAvailable nextNode;
     private String fileName;
-    private int [] ports;
+    private int port;
+    private int part;
+    private int totalParts;
     private Thread t;
+    PartOfFileDownloadListener listener;
     
-    public FileSenderClient(ServerAvailable node, ServerAvailable nextNode) {
+    public FileSenderClient(ServerAvailable node, PartOfFileDownloadListener listener) {
         this.node = node;
-        this.nextNode = nextNode;
+        this.listener = listener;
     }
     
-    public void downloadFile(String fileName, int [] ports) {
+    public void downloadFile(String fileName, int port, int part, int totalParts) {
         this.fileName = fileName;
-        this.ports = ports;
-        
+        this.port = port;
+        this.part = part;
+        this.totalParts = totalParts;
         this.t = new Thread(this);
         this.t.start();
     }
@@ -43,46 +46,41 @@ public class FileSenderClient implements Runnable {
     public void run() {
         int bytesRead;
         int current = 0;
-        FileOutputStream fos = null;
-        BufferedOutputStream bos = null;
-        Socket [] cliSocks = new Socket[this.ports.length];
-        
-        for (int i = 0; i < this.ports.length; i++) {
+        Socket cliSock = null;
+        try {
+            cliSock = new Socket("localhost", port);
+            System.out.println("Connecting...");
+
+            PrintWriter outServ = new PrintWriter(cliSock.getOutputStream(), true);
+            outServ.println(fileName + "," + totalParts + "," + part);
+
+            byte [] mybytearray  = new byte [2000000];
+            InputStream is = cliSock.getInputStream();
+            bytesRead = is.read(mybytearray, 0, mybytearray.length);
+            current = bytesRead;
+            
+            do {
+                bytesRead = is.read(mybytearray, current, (mybytearray.length - current));
+                  if(bytesRead >= 0)
+                      current += bytesRead;
+            } while(bytesRead > -1);
+            
+            int bytesForLoop = current;
+            byte [] bytesToSave = new byte[current];
+            
+            for(int i = 0; i < bytesForLoop; i ++){
+                bytesToSave[i] = mybytearray[i];
+            }
+
+            System.out.println("File " + this.fileName + " downloaded (" + current + " bytes read)");
+            listener.downloaded(port, bytesToSave);
+        } catch (IOException ex) {
+            Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
             try {
-                cliSocks[i] = new Socket("localhost", this.ports[i]);
-                System.out.println("Connecting...");
-
-                // Send file name
-                PrintWriter outServ = new PrintWriter(cliSocks[i].getOutputStream(), true);
-                outServ.println(this.fileName + "," + this.ports.length + "," + i);
-
-                // Receive file
-                byte [] mybytearray  = new byte [65535];
-                InputStream is = cliSocks[i].getInputStream();
-                fos = new FileOutputStream("C:\\ets\\" + this.node.port + "\\" + this.fileName);
-                bos = new BufferedOutputStream(fos);
-                bytesRead = is.read(mybytearray, 0, mybytearray.length);
-                current = bytesRead;
-
-                do {
-                    bytesRead = is.read(mybytearray, current, (mybytearray.length - current));
-                      if(bytesRead >= 0)
-                          current += bytesRead;
-                } while(bytesRead > -1);
-
-                bos.write(mybytearray, 0 ,current);
-                bos.flush();
-                System.out.println("File " + this.fileName + " downloaded (" + current + " bytes read)");
+                cliSock.close();
             } catch (IOException ex) {
                 Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
-            }        finally {
-                try {
-                    if (fos != null) fos.close();
-                    if (bos != null) bos.close();
-                    if (cliSocks[i] != null) cliSocks[i].close();
-                } catch (IOException ex) {
-                    Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
-                }
             }
         }
     }

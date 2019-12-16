@@ -8,11 +8,17 @@ package etsaplicaciones;
 import etsaplicaciones.filefinderserver.FileFinderClient;
 import etsaplicaciones.filefinderserver.FileFinderServer;
 import etsaplicaciones.filefinderserver.IFindFileResponse;
+import etsaplicaciones.filesenderserver.FileSenderClient;
+import etsaplicaciones.filesenderserver.FileSenderServer;
+import etsaplicaciones.filesenderserver.PartOfFile;
+import etsaplicaciones.filesenderserver.PartOfFileDownloadListener;
 import etsaplicaciones.multicastserver.MulticastServer;
 import etsaplicaciones.searchserver.IServerAvailable;
 import etsaplicaciones.searchserver.ServerAvailable;
 import etsaplicaciones.searchserver.ServerHandler;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -20,6 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,7 +35,7 @@ import java.util.stream.Stream;
  *
  * @author Marco
  */
-public class MainFrame extends javax.swing.JFrame implements IServerAvailable, IFindFileResponse {
+public class MainFrame extends javax.swing.JFrame implements IServerAvailable, IFindFileResponse, PartOfFileDownloadListener {
 
     /**
      * Creates new form Main
@@ -38,9 +46,17 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     
     public void setPort(int port){
         this.port = port;
+        try{
+            myIp = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch(Exception e){
+            System.out.println("Get IP: " + e.getMessage());
+        }
+        
         jLabel2.setText("" + port);
         initMulticast();
         initFileFinderServer();
+        initFileSenderServer();
         showAllMyFiles();
     }
     
@@ -71,7 +87,8 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void initFileSenderServer(){
-        
+        fileSenderServer = new FileSenderServer(new ServerAvailable(port, myIp));
+        fileSenderServer.startListening();
     }
             
     private void askForFile(){
@@ -85,18 +102,19 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void downloadFile(){
-        
+        jButton2.setEnabled(false);
+        listOfDownloadClient = new ArrayList();
+        for(int i = 0; i < partsOfFile.size(); i++){
+            FileSenderClient fsc = new FileSenderClient(new ServerAvailable(port, myIp), this);
+            listOfDownloadClient.add(fsc);
+            fsc.downloadFile(fileName, partsOfFile.get(i).getPort(), partsOfFile.get(i).getPartNumber(), partsOfFile.size());
+        }
     }
     
     private void initMulticast(){
         MulticastServer multicastServer = new MulticastServer(ipGroup, port, portGroup);
         multicastServer.startSending();
-        try{
-            serverHandler = new ServerHandler(portGroup, ipGroup, port, InetAddress.getLocalHost().getHostAddress(), this);
-        }
-        catch(Exception e){
-            System.out.println("Get IP: " + e.getMessage());
-        }
+        serverHandler = new ServerHandler(portGroup, ipGroup, port, myIp, this);
     }
     
     private String getServersString(ArrayList<ServerAvailable> servers){
@@ -110,6 +128,59 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private void notifyMessage(String message){
         this.message += message;
         jTextPane1.setText(this.message);
+    }
+    
+    private void checkIfAllPartsDownloaded(){
+        Boolean allDownloads = true;
+        for(int i = 0; i < partsOfFile.size(); i++){
+            allDownloads = allDownloads && partsOfFile.get(i).getDownloaded();
+        }
+        if(allDownloads){
+            FileOutputStream fos = null;
+            BufferedOutputStream bos = null;
+            
+            try{
+                fos = new FileOutputStream("C:\\ets\\" + port + "\\" + this.fileName);
+                bos = new BufferedOutputStream(fos);
+                int totalLen = 0;
+                for(int i = 0; i < partsOfFile.size(); i++){
+                    totalLen += partsOfFile.get(i).getPart().length;
+                }
+                byte [] file = new byte [totalLen];
+                int index = 0;
+                for(int i = 0; i < partsOfFile.size(); i++){
+                    byte [] b = partsOfFile.get(i).getPart();
+                    for(int j = 0; j < b.length; j ++){
+                        file[index] = b[j];
+                        index++;
+                    }
+                }
+                
+                bos.write(file, 0 ,file.length);
+                bos.flush();
+            } catch (IOException ex) {
+                Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    if (fos != null) fos.close();
+                    if (bos != null) bos.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            jButton2.setEnabled(true);
+        }
+    }
+    
+    @Override
+    public void downloaded(int port, byte [] partOfFile) {
+        for(int i = 0; i < partsOfFile.size(); i ++){
+            if(partsOfFile.get(i).getPort() == port){
+                partsOfFile.get(i).setPart(partOfFile);
+                partsOfFile.get(i).hasBeenDownloaded();
+            }
+        }
+        checkIfAllPartsDownloaded();
     }
     
     @Override
@@ -138,14 +209,24 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     public void findFileResponse(String message) {
         if(message.isEmpty()){
             jTextPane3.setText("Archivo no encontrado");
+            jButton2.setEnabled(false);
         }else{
-            jButton1.setEnabled(true);
-            jTextPane3.setText(message);
+            partsOfFile = new ArrayList();
+            String [] ports = message.split(",");
+            String portsString = "";
+            for(int i = 0; i < ports.length; i++){
+                partsOfFile.add(new PartOfFile(Integer.parseInt(ports[i]), i + 1));
+                portsString += ports[i] + "\n";
+            }
+            jButton2.setEnabled(true);
+            jTextPane3.setText(portsString);
         }
+        jButton1.setEnabled(true);
     }
    
     private int port = -1;
     private String ipGroup = "228.1.1.1";
+    private String myIp;
     private int portGroup = 8020;
     private ServerHandler serverHandler;
     private FileFinderServer fileFinderServer;
@@ -154,7 +235,8 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private ServerAvailable previous;
     private ServerAvailable next;
     private String fileName;
-    
+    private ArrayList<PartOfFile> partsOfFile;
+    private ArrayList<FileSenderClient> listOfDownloadClient;
     private String message = "";
     
     /**
