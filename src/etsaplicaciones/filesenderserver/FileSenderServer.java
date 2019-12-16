@@ -23,11 +23,10 @@ import java.util.logging.Logger;
  * @author Marco
  */
 public class FileSenderServer implements Runnable {
-    private final ServerAvailable node;
-    private Thread t;
     
     public FileSenderServer(ServerAvailable node) {
         this.node = node;
+        portDownload = node.port + 100;
     }
     
     public void startListening() {
@@ -44,7 +43,7 @@ public class FileSenderServer implements Runnable {
         Socket cliSock = null;
         
         try {
-            servsock = new ServerSocket(this.node.port);
+            servsock = new ServerSocket(portDownload);
             while (true) {
                 System.out.println("Waiting...");
                 try {
@@ -58,7 +57,7 @@ public class FileSenderServer implements Runnable {
                     String fileName = params[0];
                     int totalParts = Integer.valueOf(params[1]);
                     int numPart = Integer.valueOf(params[2]);
-                    System.out.println("Total ports: " + totalParts);
+                    System.out.println("Total parts: " + totalParts);
                     System.out.println("Num part: " + numPart);
                     
                     // Send file
@@ -92,4 +91,8 @@ public class FileSenderServer implements Runnable {
           }
         }
     }
+    
+    private final ServerAvailable node;
+    private Thread t;
+    private int portDownload;
 }

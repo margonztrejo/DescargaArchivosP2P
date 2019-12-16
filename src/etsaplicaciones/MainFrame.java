@@ -12,8 +12,16 @@ import etsaplicaciones.multicastserver.MulticastServer;
 import etsaplicaciones.searchserver.IServerAvailable;
 import etsaplicaciones.searchserver.ServerAvailable;
 import etsaplicaciones.searchserver.ServerHandler;
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -33,6 +41,25 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         jLabel2.setText("" + port);
         initMulticast();
         initFileFinderServer();
+        showAllMyFiles();
+    }
+    
+    private void showAllMyFiles(){
+        if((new File("C:\\ets\\" + port).exists())){
+            try (Stream<Path> walk = Files.walk(Paths.get("C:\\ets\\" + port))) {
+            List<String> result = walk.filter(Files::isRegularFile)
+                            .map(x -> x.getFileName().toString()).collect(Collectors.toList());
+            
+            String filesString = "";
+            for(int i = 0; i < result.size(); i++){
+                filesString += result.get(i) + "\n";
+            }
+            
+            jTextPane4.setText(filesString);
+	} catch (IOException e) {
+            e.printStackTrace();
+	}
+        }
     }
     
     private void initFileFinderServer(){
@@ -42,14 +69,23 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         }catch(Exception e){
         }
     }
+    
+    private void initFileSenderServer(){
+        
+    }
+            
     private void askForFile(){
         jButton1.setEnabled(false);
-        String fileName = jTextField1.getText();
+        fileName = jTextField1.getText();
         fileFinderClient = new FileFinderClient(port, next, this);
         try{
             fileFinderClient.askForFile(fileName);
         }catch(Exception e){
         }
+    }
+    
+    private void downloadFile(){
+        
     }
     
     private void initMulticast(){
@@ -100,8 +136,12 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     
     @Override
     public void findFileResponse(String message) {
-        jButton1.setEnabled(true);
-        jTextPane3.setText(message);
+        if(message.isEmpty()){
+            jTextPane3.setText("Archivo no encontrado");
+        }else{
+            jButton1.setEnabled(true);
+            jTextPane3.setText(message);
+        }
     }
    
     private int port = -1;
@@ -110,8 +150,10 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private ServerHandler serverHandler;
     private FileFinderServer fileFinderServer;
     private FileFinderClient fileFinderClient;
+    private FileSenderServer fileSenderServer;
     private ServerAvailable previous;
     private ServerAvailable next;
+    private String fileName;
     
     private String message = "";
     
@@ -141,6 +183,10 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
+        jButton2 = new javax.swing.JButton();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jTextPane4 = new javax.swing.JTextPane();
+        jLabel10 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Título");
@@ -161,7 +207,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         jTextPane2.setEditable(false);
         jScrollPane2.setViewportView(jTextPane2);
 
-        jLabel5.setText("Buscar Archivos");
+        jLabel5.setText("Buscar");
         jLabel5.setToolTipText("");
 
         jButton1.setText("Buscar");
@@ -171,6 +217,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
             }
         });
 
+        jTextPane3.setEditable(false);
         jScrollPane3.setViewportView(jTextPane3);
 
         jLabel6.setText("Nodo Anterior:");
@@ -180,6 +227,19 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         jLabel8.setText("Nodo Siguiente:");
 
         jLabel9.setText("????");
+
+        jButton2.setText("Descargar");
+        jButton2.setEnabled(false);
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
+        jTextPane4.setEditable(false);
+        jScrollPane4.setViewportView(jTextPane4);
+
+        jLabel10.setText("Mis archivos");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -201,13 +261,6 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jTextField1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1))
-                            .addComponent(jScrollPane3)
-                            .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel6)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel7)
@@ -215,7 +268,24 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                                 .addComponent(jLabel8)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel9)
-                                .addGap(0, 230, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jButton2)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(jScrollPane3)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(jLabel5)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(jButton1))))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jScrollPane4)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel10)
+                                        .addGap(0, 156, Short.MAX_VALUE)))))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -234,11 +304,16 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                     .addComponent(jLabel4)
                     .addComponent(jLabel5)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(jButton1)
+                    .addComponent(jLabel10))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 142, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2))
+                    .addComponent(jScrollPane2)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton2))
+                    .addComponent(jScrollPane4))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -253,11 +328,17 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
         askForFile();
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        downloadFile();
+    }//GEN-LAST:event_jButton2ActionPerformed
+
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -269,10 +350,12 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextPane jTextPane1;
     private javax.swing.JTextPane jTextPane2;
     private javax.swing.JTextPane jTextPane3;
+    private javax.swing.JTextPane jTextPane4;
     // End of variables declaration//GEN-END:variables
 
 }
