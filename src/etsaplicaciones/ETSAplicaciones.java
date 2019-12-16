@@ -5,6 +5,8 @@
  */
 package etsaplicaciones;
 
+import etsaplicaciones.filesenderserver.FileSenderClient;
+import etsaplicaciones.filesenderserver.FileSenderServer;
 import etsaplicaciones.searchserver.ServerAvailable;
 
 /**
@@ -17,7 +19,12 @@ public class ETSAplicaciones{
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        initFrames();
+//        initFrames();
+        FileSenderServer fss = new FileSenderServer(new ServerAvailable(9000, "localhost"));
+        fss.startListening();
+        
+        FileSenderClient fsc = new FileSenderClient(new ServerAvailable(9000, "localhost"), new ServerAvailable(9000, "localhost"));
+        fsc.downloadFile("asdf.txt", new int[]{ 9000 });
     }
     
     private static void initFrames(){
