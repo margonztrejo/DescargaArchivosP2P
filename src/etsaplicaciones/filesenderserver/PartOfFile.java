@@ -11,8 +11,10 @@ package etsaplicaciones.filesenderserver;
  */
 public class PartOfFile {
     
-    public PartOfFile(int port, int partNumber){
+    public PartOfFile(int port, String ip, String md5, int partNumber){
         this.port = port;
+        this.ip = ip;
+        this.md5 = md5;
         downloaded = false;
         this.partNumber = partNumber;
     }
@@ -49,8 +51,26 @@ public class PartOfFile {
         return partNumber;
     }
     
+    public void setIp(String ip){
+        this.ip = ip;
+    }
+    
+    public String getIp(){
+        return ip;
+    }
+    
+    public void setMD5(String md5){
+        this.md5 = md5;
+    }
+    
+    public String getMD5(){
+        return md5;
+    }
+    
     private int port;
     private Boolean downloaded;
     private byte [] partOfFile;
     private int partNumber;
+    private String ip;
+    private String md5;
 }

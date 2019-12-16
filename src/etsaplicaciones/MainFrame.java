@@ -79,7 +79,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void initFileFinderServer(){
-        fileFinderServer = new FileFinderServer(port, next, this);
+        fileFinderServer = new FileFinderServer(port, next, this, myIp);
         try{
             fileFinderServer.startListening();
         }catch(Exception e){
@@ -94,11 +94,22 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private void askForFile(){
         jButton1.setEnabled(false);
         fileName = jTextField1.getText();
-        fileFinderClient = new FileFinderClient(port, next, this);
-        try{
-            fileFinderClient.askForFile(fileName);
-        }catch(Exception e){
+        
+        if(iHaveTheFile(fileName)){
+            notifyMessage("El archivo se encuentra disponible en esta carpeta");
+            jButton1.setEnabled(true);
+        }else{
+            fileFinderClient = new FileFinderClient(port, next, this);
+            try{
+                fileFinderClient.askForFile(fileName);
+            }catch(Exception e){
+            }
         }
+    }
+    
+    private Boolean iHaveTheFile(String fileName){
+        File f = new File("C:\\ets\\" + this.port + "\\" + fileName);
+        return f.exists();
     }
     
     private void downloadFile(){
@@ -158,6 +169,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
                 
                 bos.write(file, 0 ,file.length);
                 bos.flush();
+                showAllMyFiles();
             } catch (IOException ex) {
                 Logger.getLogger(FileSenderClient.class.getName()).log(Level.SEVERE, null, ex);
             } finally {
@@ -220,7 +232,8 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
             String [] ports = message.split(",");
             String portsString = "";
             for(int i = 0; i < ports.length; i++){
-                partsOfFile.add(new PartOfFile(Integer.parseInt(ports[i]), i + 1));
+                String [] res = ports[i].split(":");
+                partsOfFile.add(new PartOfFile(Integer.parseInt(res[0]), res[1], res[2], i + 1));
                 portsString += ports[i] + "\n";
             }
             jButton2.setEnabled(true);

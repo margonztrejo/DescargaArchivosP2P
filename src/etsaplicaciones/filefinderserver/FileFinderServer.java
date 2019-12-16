@@ -11,9 +11,11 @@ import etsaplicaciones.searchserver.ServerAvailable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -23,6 +25,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
@@ -34,7 +40,8 @@ import java.util.logging.Logger;
  */
 public class FileFinderServer implements Runnable {
     
-    public FileFinderServer(int port, ServerAvailable nextNode, ShowEventListener listener) {
+    public FileFinderServer(int port, ServerAvailable nextNode, ShowEventListener listener, String myIp) {
+        this.myIp = myIp;
         this.eventListener = listener;
         this.port = port;
         this.nextNode = nextNode;
@@ -60,9 +67,9 @@ public class FileFinderServer implements Runnable {
             eventListener.showEvent("Respuesta del nodo con puerto" + nextNode.port + ": " + message + "\n");
             if(iHaveTheFile(fileName)){
                 if(message.isEmpty()){
-                    message += getPortForDownload();
+                    message += getResponse(fileName);
                 }else{
-                    message += "," + getPortForDownload();
+                    message += "," + getResponse(fileName);
                 }
                 eventListener.showEvent("El nodo del puerto " +  portSource + " solicitó el archivo " + fileName + ". Se encuentra disponible"  + "\n");
             }else{
@@ -97,6 +104,33 @@ public class FileFinderServer implements Runnable {
     private int getPortForDownload(){
         return this.port + 100;
     }
+    
+    private String getResponse(String fileName){
+        String response = "";
+        try{
+            response += getPortForDownload();
+            response += ":" + myIp;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            InputStream is = Files.newInputStream(Paths.get("C:\\ets\\" + this.port + "\\" + fileName));
+            DigestInputStream dis = new DigestInputStream(is, md);
+            byte[] messageDigest = dis.getMessageDigest().digest();
+            
+            // Convert byte array into signum representation 
+            BigInteger no = new BigInteger(1, messageDigest); 
+  
+            // Convert message digest into hex value 
+            String hashtext = no.toString(16); 
+            while (hashtext.length() < 32) { 
+                hashtext = "0" + hashtext; 
+            }
+            response += ":" + hashtext;
+            
+        }catch(Exception e){
+        
+        }
+        return response;
+    }
+    
     /*
     @Override
     public void run(){
@@ -180,7 +214,7 @@ public class FileFinderServer implements Runnable {
 
                 if (portCli == this.nextNode.port) {
                     if(iHaveTheFile(fileName)){
-                        this.outCli.println(getPortForDownload()+"");
+                        this.outCli.println(getResponse(fileName));
                         eventListener.showEvent("El nodo del puerto " +  portCli + " solicitó el archivo " + fileName + ". Se encuentra disponible" + "\n");
                     }else{
                         this.outCli.println("");
@@ -206,4 +240,5 @@ public class FileFinderServer implements Runnable {
     private Socket clientSocket;
     private PrintWriter outCli;
     private ShowEventListener eventListener;
+    private String myIp;
 }
