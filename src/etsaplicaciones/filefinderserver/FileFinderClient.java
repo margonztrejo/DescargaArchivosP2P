@@ -41,8 +41,9 @@ public class FileFinderClient implements Runnable {
     public void run() {
         try
         {
-            Socket cliSock = new Socket(node.ip, node.port); 
-            System.out.println("Conectando...");
+            System.out.println("Conectando a " + node.port + "...");
+            System.out.println("Conectando a " + node.ip + "...");
+            Socket cliSock = new Socket(node.ip, node.port);
             
             //Flujo de datos hacia el servidor
             PrintWriter outServ = new PrintWriter(cliSock.getOutputStream(), true);
@@ -62,7 +63,7 @@ public class FileFinderClient implements Runnable {
         }
         catch (Exception e)
         {
-            System.out.println("Client: " + e.getMessage());
+            System.out.println("Client: " + e);
         }
     }
 }
