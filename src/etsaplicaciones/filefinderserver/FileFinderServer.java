@@ -6,6 +6,7 @@
 package etsaplicaciones.filefinderserver;
 
 import etsaplicaciones.ETSAplicaciones;
+import etsaplicaciones.ShowEventListener;
 import etsaplicaciones.searchserver.ServerAvailable;
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,8 +14,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,14 +33,9 @@ import java.util.logging.Logger;
  * @author Marco
  */
 public class FileFinderServer implements Runnable {
-    private final int port;
-    private ServerAvailable nextNode;
-    private Thread t;
-    private ServerSocket servSock; 
-    private Socket clientSocket;
-    private PrintWriter outCli;
     
-    public FileFinderServer(int port, ServerAvailable nextNode) {
+    public FileFinderServer(int port, ServerAvailable nextNode, ShowEventListener listener) {
+        this.eventListener = listener;
         this.port = port;
         this.nextNode = nextNode;
         createDirectoryIfNotExist();
@@ -52,9 +57,16 @@ public class FileFinderServer implements Runnable {
     
     private void askForFileToNextNode(String fileName, int portSource) {
         FileFinderClient ffc = new FileFinderClient(portSource, this.nextNode, (String message) -> {
-            
+            eventListener.showEvent("Respuesta del nodo con puerto" + nextNode.port + ": " + message + "\n");
             if(iHaveTheFile(fileName)){
-                message += "," + getPortForDownload();
+                if(message.isEmpty()){
+                    message += getPortForDownload();
+                }else{
+                    message += "," + getPortForDownload();
+                }
+                eventListener.showEvent("El nodo del puerto " +  portSource + " solicitó el archivo " + fileName + ". Se encuentra disponible"  + "\n");
+            }else{
+                eventListener.showEvent("El nodo del puerto " +  portSource + " solicitó el archivo " + fileName + ". No se encuentra disponible"  + "\n");
             }
                 
             this.outCli.println(message);
@@ -85,6 +97,58 @@ public class FileFinderServer implements Runnable {
     private int getPortForDownload(){
         return this.port + 100;
     }
+    /*
+    @Override
+    public void run(){
+        try{
+            InetAddress host = InetAddress.getLocalHost();
+            Selector selector = Selector.open();
+
+            ServerSocketChannel serverSocketChannel  = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.bind(new InetSocketAddress(host, port));
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            SelectionKey key = null;
+            
+            while(true){
+                if(selector.select() <= 0)
+                    continue;
+            
+                Set<SelectionKey> selectedKey = selector.selectedKeys();
+                Iterator<SelectionKey> iterator = selectedKey.iterator();
+            
+                while(iterator.hasNext()){
+                    key = (SelectionKey) iterator.next();
+                    iterator.remove();
+                    if(key.isAcceptable()){
+                        SocketChannel sc = serverSocketChannel.accept();
+                        sc.configureBlocking(false);
+                        sc.register(selector, SelectionKey.OP_WRITE);
+                        System.out.println("Connection Accepted: " + sc.getLocalAddress() + "\n");
+                    }
+                    if(key.isReadable()){
+                        SocketChannel sc = (SocketChannel) key.channel();
+                        ByteBuffer bb = ByteBuffer.allocate(1024);
+                        sc.read(bb);
+                        String result = new String(bb.array()).trim();
+                        System.out.println("Message received: " + result + " Message length= " + result.length());
+                    }
+                    if(key.isWritable()){
+                        SocketChannel sc = (SocketChannel) key.channel();
+                        String message = "Petición recibida y aceptada";
+                        ByteBuffer buffer = ByteBuffer.allocate(message.length());
+                        buffer.put(message.getBytes());
+                        sc.write(buffer);
+                        sc.register(selector, SelectionKey.OP_READ);
+                    }
+                }
+            }
+            
+        }catch(Exception e){
+            
+        }
+    }*/
+    
     
     @Override
     public void run() {
@@ -117,12 +181,14 @@ public class FileFinderServer implements Runnable {
                 if (portCli == this.nextNode.port) {
                     if(iHaveTheFile(fileName)){
                         this.outCli.println(getPortForDownload()+"");
+                        eventListener.showEvent("El nodo del puerto " +  portCli + " solicitó el archivo " + fileName + ". Se encuentra disponible" + "\n");
                     }else{
                         this.outCli.println("");
-                        
+                        eventListener.showEvent("El nodo del puerto " +  portCli + " solicitó el archivo " + fileName + ". No se encuentra disponible" + "\n");
                     }
                     this.stop();
                 } else {
+                    eventListener.showEvent("Se le ha preguntado al nodo con puerto " + nextNode.port + " si tiene el archivo" + "\n");
                     this.askForFileToNextNode(fileName, portCli);
                 }
             }
@@ -132,4 +198,12 @@ public class FileFinderServer implements Runnable {
             System.out.println("Server: " + e.getMessage());
         }
     }
+    
+    private final int port;
+    private ServerAvailable nextNode;
+    private Thread t;
+    private ServerSocket servSock; 
+    private Socket clientSocket;
+    private PrintWriter outCli;
+    private ShowEventListener eventListener;
 }

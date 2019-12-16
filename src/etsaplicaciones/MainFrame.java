@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  *
  * @author Marco
  */
-public class MainFrame extends javax.swing.JFrame implements IServerAvailable, IFindFileResponse, PartOfFileDownloadListener {
+public class MainFrame extends javax.swing.JFrame implements IServerAvailable, IFindFileResponse, PartOfFileDownloadListener, ShowEventListener {
 
     /**
      * Creates new form Main
@@ -79,7 +79,7 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     }
     
     private void initFileFinderServer(){
-        fileFinderServer = new FileFinderServer(port, next);
+        fileFinderServer = new FileFinderServer(port, next, this);
         try{
             fileFinderServer.startListening();
         }catch(Exception e){
@@ -170,6 +170,11 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
             }
             jButton2.setEnabled(true);
         }
+    }
+    
+    @Override
+    public void showEvent(String event) {
+        notifyMessage(event);
     }
     
     @Override
@@ -439,5 +444,6 @@ public class MainFrame extends javax.swing.JFrame implements IServerAvailable, I
     private javax.swing.JTextPane jTextPane3;
     private javax.swing.JTextPane jTextPane4;
     // End of variables declaration//GEN-END:variables
+
 
 }
